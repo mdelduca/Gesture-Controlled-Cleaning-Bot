@@ -1,2 +1,2 @@
 # Gesture-Controlled-Wheelchair
-A project made for the University of Toronto MakeUofT 2024 Makeathon
+A project made for the 2024 University of Toronto MakeUofT Makeathon
