@@ -5,13 +5,10 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
-#define GND_PIN 1
-#define Vcc_PIN 2
-#define CE_PIN 3
-#define CSN_PIN 4
-#define SCLK_PIN 5
-#define MOSI_PIN 6 // used to send?
-#define MISO_PIN 7 // used to receive?
+
+#define CE_PIN 7
+#define CSN_PIN 8
+
 
 /*
 Reciever To Do:
@@ -64,11 +61,18 @@ void setup() {
 	radio.startListening();
 }
 
+int delayTime = 500;
 void loop() {
 	if (radio.available()) {
-        int text;
+
+        int text = -1;
+		Serial.println(text, DEC);
         radio.read(&text, sizeof(text));
-        Serial.println(text);
-    }
+        Serial.println(text, DEC);
+		delay(delayTime);
+    }else{
+		Serial.println("NOT AVAILABLE");
+	}
+	
     //Serial.print("TEST");
 }

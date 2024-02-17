@@ -20,13 +20,10 @@ Needed Pin Connections:
 IRQ (Pin 8) is not really needed, we are polling for data
 */
 
-#define GND_PIN 1
-#define Vcc_PIN 2
-#define CE_PIN 3
-#define CSN_PIN 4
-#define SCLK_PIN 5
-#define MOSI_PIN 6 // used to send?
-#define MISO_PIN 7 // used to receive?
+
+#define CE_PIN 7
+#define CSN_PIN 8
+
 
 /*
 Transmitter To Do:
@@ -61,7 +58,7 @@ only sending an integer
 
 const byte address[6] = "00001";
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(19200);
     /*
     Wire.begin();                      // Initialize comunication
     Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
@@ -73,28 +70,35 @@ void setup() {
     // setup radio into TX mode. may need to implement payload size
     radio.begin();
     radio.openWritingPipe(address);
-    radio.setPALevel(RF24_PA_MIN);
+    radio.setPALevel(RF24_PA_LOW);
     radio.stopListening();
-
+	radio.setPayloadSize(sizeof(int));
+	if(radio.failureDetected){
+		Serial.println("FAILURE DETECTED!!! ERROR");
+	}
 }
 
 int count = 0;
 bool tx_ok, tx_fail, rx_ready;
+int delayTime = 1000;
 
 void loop() {
     int msg = count;
 	bool report = radio.write(&msg, sizeof(msg));
     radio.whatHappened(tx_ok, tx_fail, rx_ready);
-	
+
     if(report){
-        Serial.print(msg, DEC);
-        Serial.print(" Sent! TX_OK, TX_FAIL, RX_READY");
-		Serial.print(tx_ok, BIN);
-		Serial.print(tx_fail, BIN);
-		Serial.print(rx_ready, BIN);
-		Serial.println();
-    }
-    count++;
-    delay(1000);
+        Serial.println("Sent!");	
+    }else{
+		Serial.println("TX_OK, TX_FAIL, RX_READY, Count");
+		Serial.println(tx_ok);
+		Serial.println(tx_fail);
+		Serial.println(rx_ready);
+	}
+	
+	Serial.println(count);
+    
+	count++;
+    delay(delayTime);
     
 }
