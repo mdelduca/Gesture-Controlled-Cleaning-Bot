@@ -17,14 +17,15 @@ void setup() {
 }
 
 void loop() {
-  const float text[3] = {count, count/2.0, pow(count, 0.5)};
-  radio.write(&text, sizeof(text));
+  // placeholders for the msg array
+  const int msg[3] = {count, count/2, pow(count, 2)};
+  radio.write(&msg, sizeof(msg));
   Serial.print("Sent: ");
-  Serial.print(text[0]);
+  Serial.print(msg[0]);
   Serial.print(" ");
-  Serial.print(text[1]);
+  Serial.print(msg[1]);
   Serial.print(" ");
-  Serial.println(text[2]);
+  Serial.println(msg[2]);
   delay(1000);
   count++;
 }
