@@ -40,7 +40,11 @@ void sendData();
 void setup() {
   Serial.begin(19200);
   pinMode(ledPin, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(5, OUTPUT);
   digitalWrite(ledPin, HIGH);
+
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
@@ -78,12 +82,12 @@ void loop() {
   //  Gyro Data Retrieval
   readGyro();
 
-  gyroX = map(gyroX, -255, 255, -155, 155);
-  gyroY = map(gyroY, -255, 255, -155, 155);
+  // gyroX = map(gyroX, -255, 255, -155, 155);
+  // gyroY = map(gyroY, -255, 255, -155, 155);
 
   if (cycleCount == 25) {
     cycleCount = 0;
-    calcGyroFix();
+    // calcGyroFix();
     gXRaw -= (gRawXThresh);
     gYRaw -= (gRawYThresh);
   }
@@ -106,12 +110,12 @@ void loop() {
     gYRaw += (gyroY - (gyroYThresh * (gyroY / abs(gyroY)))) * elapsedTime;
   }
 
-  if (abs(gyroX - prevGyroX) > 100) {
+  if (abs(gyroX - prevGyroX) > 140) {
     gXRaw = 0;
     gyroX = 0;
   }
 
-  if (abs(gyroY - prevGyroY) > 120) {
+  if (abs(gyroY - prevGyroY) > 180) {
     gYRaw = 0;
     gyroY = 0;
   }
@@ -119,13 +123,13 @@ void loop() {
   pitch = 0.96 * gXRaw + 0.04 * accAngleX;
   roll = 0.96 * gYRaw + 0.04 * accAngleY + 5;
 
-  if (abs(pitch) < 15) {
+  if (abs(pitch) < 40) {
     pitch = 0;
     // gXRaw = 0;
     accAngleX = 0;
   }
 
-  if (abs(roll) < 15) {
+  if (abs(roll) < 40) {
     roll = 0;
     // gYRaw = 0;
     accAngleY = 0;
@@ -143,7 +147,32 @@ void loop() {
 
   prevGyroX = gyroX;
   prevGyroY = gyroY;
+  // pitch > 0, set d2 to high
+  // roll < 0, set d4 to high
+  // pitch < 0, set d3 to high
+  // roll > 0, set d5 to high
 
+  if(pitch > 0){
+    digitalWrite(2, HIGH);
+    digitalWrite(3, LOW);
+  }else if(pitch < 0){
+    digitalWrite(2, LOW);
+    digitalWrite(3, HIGH);
+  } else {
+    digitalWrite(2, LOW);
+    digitalWrite(3, LOW);
+  }
+
+  if(roll > 0){
+    digitalWrite(5, HIGH);
+    digitalWrite(4, LOW);
+  }else if(roll < 0){
+    digitalWrite(5, LOW);
+    digitalWrite(4, HIGH);
+  } else {
+    digitalWrite(4, LOW);
+    digitalWrite(5, LOW);
+  }
   sendData();
 }
 
@@ -245,8 +274,8 @@ void calcGyroFix() {
     prevTime = currTime;
     readGyro();
 
-    gyroX = map(gyroX, -255, 255, -155, 155);
-    gyroY = map(gyroY, -255, 255, -155, 155);
+    // gyroX = map(gyroX, -255, 255, -155, 155);
+    // gyroY = map(gyroY, -255, 255, -155, 155);
 
     if (abs(gyroX) < abs(gyroXThresh)) {
       gyroX = 0.0;
