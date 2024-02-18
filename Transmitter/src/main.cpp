@@ -55,50 +55,21 @@ only sending an integer
 4 = Error in msg
 */
 
+
 const byte address[6] = "00001";
-int count = 7;
-void setup() {
-    Serial.begin(19200);
-    /*
-    Wire.begin();                      // Initialize comunication
-    Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
-    Wire.write(0x6B);                  // Talk to the register 6B
-    Wire.write(0x00);                  // Make reset - place a 0 into the 6B register
-    Wire.endTransmission(true);        //end the transmission
-    */
-    
-    // setup radio into TX mode. may need to implement payload size
-    radio.begin();
-    radio.openWritingPipe(address);
-    radio.setPALevel(RF24_PA_LOW);
-    radio.stopListening();
-	radio.setPayloadSize(sizeof(int));
-	if(radio.failureDetected){
-		Serial.println("FAILURE DETECTED!!! ERROR");
-	}
+
+void setup() 
+{
+	 Serial.begin(19200);
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
 }
 
-int count = 0;
-bool tx_ok, tx_fail, rx_ready;
-int delayTime = 1000;
-
 void loop() {
-    int msg = count;
-	bool report = radio.write(&msg, sizeof(msg));
-    radio.whatHappened(tx_ok, tx_fail, rx_ready);
-
-    if(report){
-        Serial.println("Sent!");	
-    }else{
-		Serial.println("TX_OK, TX_FAIL, RX_READY, Count");
-		Serial.println(tx_ok);
-		Serial.println(tx_fail);
-		Serial.println(rx_ready);
-	}
-	
-	Serial.println(count);
-    
-	count++;
-    delay(delayTime);
-    
+  const char text[] = "Hello World";
+  radio.write(&text, sizeof(text));
+  Serial.println("message");
+  delay(1000);
 }

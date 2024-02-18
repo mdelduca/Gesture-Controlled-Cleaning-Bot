@@ -2,59 +2,64 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
-
-#define CE_PIN 7
-#define CSN_PIN 8
-
-
-/*
-Reciever To Do:
-Need to recieve:
-  - Gyroscope Data
-  - Flex Sensor Data
-
-Needed Pin Connections: 
-(Based on chip datasheet from https://components101.com/wireless/nrf24l01-pinout-features-datasheet)
-  - GND (Pin 1)
-  - Vcc (Pin 2)
-  - Chip Enable (Pin 3)
-  - Chip Select Not (Pin 4) needs to be kept high
-  - Serial Clock (Pin 5)
-  - MOSI (Pin 6)
-  - MISO (Pin 7)
-
-IRQ (Pin 8) is not really needed, we are polling for data
-
-Key operations:
-Recieve Steering and Acceleration values
-
-convert them to needed analog signals to our motors
-
-*/
-RF24 radio(CE_PIN, CSN_PIN); // CE, CSN
+RF24 radio(7, 8); // CE, CSN
 
 const byte address[6] = "00001";
 
+/*
+roll/pitch effect steering
+flex sensor effect acceleration
+message format:
+msg[0] flex value
+msg[1] roll value
+msg[2] pitch value
+the above are hopefully calculated to a form that is useful
+	- minimum thresholds have been handled
+
+Flex Sensor:
+physically returns values between 700-900
+the glove will process it to become ___
+this will be implemented in the calculations for the motor control output
+
+Roll:
+physically returns values between ___
+the glove will process it to become ___
+this will be implemented in the calculations for the motor control output
+
+Pitch:
+physically returns values between ___
+the glove will process it to become ___
+this will be implemented in the calculations for the motor control output
+
+*** NEED TO FIGURE OUT CALCULATIONS AND VALUES TO IMPLEMENT IT TO THE MOTOR CONTROLS
+
+motor control needs PWM Values (0-255)
+sponge is fueled by the flex sensor (0-1020)
+
+*/
+
+int calculateSpongePWM(float);
+
 void setup() {
   Serial.begin(9600);
+  pinMode(3, OUTPUT);
   radio.begin();
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
 }
 
-int delayTime = 500;
 void loop() {
-	if (radio.available()) {
+  if (radio.available()) {
+    float msg[3];
+    radio.read(&msg, sizeof(msg));
+	Serial.print("Recieved: ");
+    Serial.print(msg[0], DEC);
+	Serial.print(" ");
+	Serial.print(msg[1], DEC);
+	Serial.print(" ");
+	Serial.println(msg[2], DEC);
+	//int decoded = msg[0];
 
-        int text = -1;
-		Serial.println(text, DEC);
-        radio.read(&text, sizeof(text));
-        Serial.println(text, DEC);
-		delay(delayTime);
-    }else{
-		Serial.println("NOT AVAILABLE");
-	}
-	
-    //Serial.print("TEST");
+  }
 }
