@@ -95,10 +95,12 @@ int determineSpongeState(int gyro_pitch){
 }
 
 void setup() {
-  	Serial.begin(19200);
+  	Serial.begin(9600);
+	/*
 	pinMode(LEFT_PIN, OUTPUT);
 	pinMode(RIGHT_PIN, OUTPUT);
 	pinMode(SPONGE_PIN, OUTPUT);
+	*/
 	radio.begin();
 	radio.openReadingPipe(1, address);
 	radio.setPALevel(RF24_PA_MIN);
@@ -122,17 +124,18 @@ int sponge_value = 50;
 
 void loop() {
   	if (radio.available()) {
-		int msg[3];
-		radio.read(&msg, sizeof(msg));
+		float msg[32];
+		radio.read(msg, sizeof(msg));
 		Serial.print("Recieved: ");
 		Serial.print(msg[0], DEC);
 		Serial.print(" ");
 		Serial.print(msg[1], DEC);
 		Serial.print(" ");
 		Serial.println(msg[2], DEC);
-		flex_sensor = msg[0];
+		/*
 
 		// manipulate motors based on the recieved sensor values
+		flex_sensor = msg[0];
 		roll = msg[1];
 		pitch = msg[2];
 		move_state = determineMoveState(flex_sensor, roll);
@@ -163,12 +166,14 @@ void loop() {
 			// no sponging
 			sponge_PWM = 0;
 		}
+		*/
   	}
 
 	
-
+	/*
 	// output these PWM values to the corresponding pins
 	analogWrite(LEFT_PIN, left_PWM);
 	analogWrite(RIGHT_PIN, right_PWM);
 	analogWrite(SPONGE_PIN, sponge_PWM);
+	*/
 }
