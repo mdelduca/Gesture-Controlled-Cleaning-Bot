@@ -51,7 +51,7 @@ void setup() {
 
 void loop() {
   if (radio.available()) {
-    float msg[3];
+    int msg[3];
     radio.read(&msg, sizeof(msg));
 	Serial.print("Recieved: ");
     Serial.print(msg[0], DEC);

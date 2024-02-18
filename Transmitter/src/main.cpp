@@ -60,16 +60,19 @@ const byte address[6] = "00001";
 
 void setup() 
 {
-	 Serial.begin(19200);
+	Serial.begin(19200);
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
 }
 
+int count = 0;
+
 void loop() {
-  const char text[] = "Hello World";
+  const int text[3] = {count, count/2, pow(count, 2)};
   radio.write(&text, sizeof(text));
   Serial.println("message");
+  count++;
   delay(1000);
 }
