@@ -14,9 +14,10 @@ const byte address[6] = "00001";
 roll/pitch effect steering
 flex sensor effect acceleration
 message format:
-msg[0] flex value
+msg[0] pitch value
 msg[1] roll value
-msg[2] pitch value
+msg[2] flex value
+
 the above are hopefully calculated to a form that is useful
 	- minimum thresholds have been handled
 
@@ -38,7 +39,7 @@ this will be implemented in the calculations for the motor control output
 *** NEED TO FIGURE OUT CALCULATIONS AND VALUES TO IMPLEMENT IT TO THE MOTOR CONTROLS
 
 motor control needs PWM Values (0-255)
-sponge is fueled by the flex sensor (0-1020)
+sponge is fueled by the flex sensor (0-1200)
 
 need specific pins to control each motor
 need the specific desired ratios on how each sensor should effect things
@@ -96,11 +97,11 @@ int determineSpongeState(int gyro_pitch){
 
 void setup() {
   	Serial.begin(9600);
-	/*
+	
 	pinMode(LEFT_PIN, OUTPUT);
 	pinMode(RIGHT_PIN, OUTPUT);
 	pinMode(SPONGE_PIN, OUTPUT);
-	*/
+	
 	radio.begin();
 	radio.openReadingPipe(1, address);
 	radio.setPALevel(RF24_PA_MIN);
@@ -132,7 +133,7 @@ void loop() {
 		Serial.print(msg[1], DEC);
 		Serial.print(" ");
 		Serial.println(msg[2], DEC);
-		/*
+		
 
 		// manipulate motors based on the recieved sensor values
 		flex_sensor = msg[0];
@@ -166,14 +167,14 @@ void loop() {
 			// no sponging
 			sponge_PWM = 0;
 		}
-		*/
+		
   	}
 
 	
-	/*
+	
 	// output these PWM values to the corresponding pins
 	analogWrite(LEFT_PIN, left_PWM);
 	analogWrite(RIGHT_PIN, right_PWM);
 	analogWrite(SPONGE_PIN, sponge_PWM);
-	*/
+	
 }
