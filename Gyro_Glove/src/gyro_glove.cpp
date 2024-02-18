@@ -78,8 +78,8 @@ void loop() {
   //  Gyro Data Retrieval
   readGyro();
 
-  gyroX = map(gyroX, -255, 255, -155, 155);
-  gyroY = map(gyroY, -255, 255, -155, 155);
+  // gyroX = map(gyroX, -255, 255, -155, 155);
+  // gyroY = map(gyroY, -255, 255, -155, 155);
 
   if (cycleCount == 25) {
     cycleCount = 0;
@@ -106,12 +106,12 @@ void loop() {
     gYRaw += (gyroY - (gyroYThresh * (gyroY / abs(gyroY)))) * elapsedTime;
   }
 
-  if (abs(gyroX - prevGyroX) > 100) {
+  if (abs(gyroX - prevGyroX) > 140) {
     gXRaw = 0;
     gyroX = 0;
   }
 
-  if (abs(gyroY - prevGyroY) > 120) {
+  if (abs(gyroY - prevGyroY) > 180) {
     gYRaw = 0;
     gyroY = 0;
   }
@@ -119,13 +119,13 @@ void loop() {
   pitch = 0.96 * gXRaw + 0.04 * accAngleX;
   roll = 0.96 * gYRaw + 0.04 * accAngleY + 5;
 
-  if (abs(pitch) < 15) {
+  if (abs(pitch) < 40) {
     pitch = 0;
     // gXRaw = 0;
     accAngleX = 0;
   }
 
-  if (abs(roll) < 15) {
+  if (abs(roll) < 40) {
     roll = 0;
     // gYRaw = 0;
     accAngleY = 0;
@@ -245,8 +245,8 @@ void calcGyroFix() {
     prevTime = currTime;
     readGyro();
 
-    gyroX = map(gyroX, -255, 255, -155, 155);
-    gyroY = map(gyroY, -255, 255, -155, 155);
+    // gyroX = map(gyroX, -255, 255, -155, 155);
+    // gyroY = map(gyroY, -255, 255, -155, 155);
 
     if (abs(gyroX) < abs(gyroXThresh)) {
       gyroX = 0.0;
