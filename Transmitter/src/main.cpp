@@ -1,7 +1,6 @@
+
 #include <Arduino.h>
-#include <Wire.h>
-// code for Transmitter to print hello world from Michael
-#define led 5
+#include <RF24.h>
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -57,6 +56,7 @@ only sending an integer
 */
 
 const byte address[6] = "00001";
+int count = 7;
 void setup() {
     Serial.begin(19200);
     /*

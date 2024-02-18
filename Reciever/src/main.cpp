@@ -1,6 +1,3 @@
-#include <Arduino.h>
-#include <Wire.h>
-// code for Reciever to print hello world from Michael
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -38,27 +35,12 @@ RF24 radio(CE_PIN, CSN_PIN); // CE, CSN
 
 const byte address[6] = "00001";
 
-/*
-Message Structure:
-only sending an integer
-0 = Stationary
-1 = Forward
-2 = Left
-3 = Right
-4 = Error in msg
-*/
-void parseMessage(int message){
-
-}
-
 void setup() {
-	Serial.begin(19200);
-  
-	// Set up radio into RX mode. may need to set up payload size
-	radio.begin();
-	radio.openReadingPipe(1, address);
-	radio.setPALevel(RF24_PA_MIN);
-	radio.startListening();
+  Serial.begin(9600);
+  radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening();
 }
 
 int delayTime = 500;
