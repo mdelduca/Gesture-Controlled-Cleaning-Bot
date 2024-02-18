@@ -52,17 +52,10 @@ int calculateSpongePWM(int gyro_pitch){
 	return (gyro_pitch)*(255/90);
 }
 
-void steerRight(int flex_value, int gyro_roll, int* left_PWM, int* right_PWM){
-	
-}
-
-void steerLeft(int flex_value, int gyro_roll, int* left_PWM, int* right_PWM){
-	
-}
 
 
 int roll_steer_threshold = 20;
-int flex_threshold = 500;
+int flex_threshold = 700;
 
 int determineMoveState(int flex_value, int gyro_roll){
 	if(abs(flex_value) >= flex_threshold){
