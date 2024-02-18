@@ -29,6 +29,7 @@ int cycleCount;
 float accAngleX, accAngleY;
 
 float prevGyroX, prevGyroY;
+bool dissmissRoll, dismissPitch;
 
 void print();
 void readGyro();
@@ -87,7 +88,7 @@ void loop() {
 
   if (cycleCount == 25) {
     cycleCount = 0;
-    // calcGyroFix();
+    calcGyroFix();
     gXRaw -= (gRawXThresh);
     gYRaw -= (gRawYThresh);
   }
@@ -110,15 +111,15 @@ void loop() {
     gYRaw += (gyroY - (gyroYThresh * (gyroY / abs(gyroY)))) * elapsedTime;
   }
 
-  if (abs(gyroX - prevGyroX) > 140) {
-    gXRaw = 0;
-    gyroX = 0;
-  }
+  // if (abs(gyroX - prevGyroX) > 100 && pitch == 0) {
+  //   gXRaw = 0;
+  //   gyroX = 0;
+  // }
 
-  if (abs(gyroY - prevGyroY) > 180) {
-    gYRaw = 0;
-    gyroY = 0;
-  }
+  // if (abs(gyroY - prevGyroY) > 120 && roll == 0) {
+  //   gYRaw = 0;
+  //   gyroY = 0;
+  // }
 
   pitch = 0.96 * gXRaw + 0.04 * accAngleX;
   roll = 0.96 * gYRaw + 0.04 * accAngleY + 5;
