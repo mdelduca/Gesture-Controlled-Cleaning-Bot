@@ -61,18 +61,24 @@ const byte address[6] = "00001";
 void setup() 
 {
 	Serial.begin(19200);
-  radio.begin();
-  radio.openWritingPipe(address);
-  radio.setPALevel(RF24_PA_MIN);
-  radio.stopListening();
+	radio.begin();
+	radio.openWritingPipe(address);
+	radio.setPALevel(RF24_PA_MIN);
+	radio.stopListening();
 }
 
 int count = 0;
 
 void loop() {
-  const int text[3] = {count, count/2, pow(count, 2)};
-  radio.write(&text, sizeof(text));
-  Serial.println("message");
-  count++;
-  delay(1000);
+	// placeholder values, count is being used for debugging
+	const int message[3] = {count, count%2, count*count};
+	Serial.print("Transmitting: ");
+	Serial.print(message[0], DEC);
+	Serial.print(" ");
+	Serial.print(message[1], DEC);
+	Serial.print(" ");
+	Serial.println(message[2], DEC);
+	radio.write(&message, sizeof(message));
+	count++;
+	delay(1000);
 }
