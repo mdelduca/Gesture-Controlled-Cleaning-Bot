@@ -40,7 +40,11 @@ void sendData();
 void setup() {
   Serial.begin(19200);
   pinMode(ledPin, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(5, OUTPUT);
   digitalWrite(ledPin, HIGH);
+
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
@@ -83,7 +87,7 @@ void loop() {
 
   if (cycleCount == 25) {
     cycleCount = 0;
-    calcGyroFix();
+    // calcGyroFix();
     gXRaw -= (gRawXThresh);
     gYRaw -= (gRawYThresh);
   }
@@ -143,7 +147,32 @@ void loop() {
 
   prevGyroX = gyroX;
   prevGyroY = gyroY;
+  // pitch > 0, set d2 to high
+  // roll < 0, set d4 to high
+  // pitch < 0, set d3 to high
+  // roll > 0, set d5 to high
 
+  if(pitch > 0){
+    digitalWrite(2, HIGH);
+    digitalWrite(3, LOW);
+  }else if(pitch < 0){
+    digitalWrite(2, LOW);
+    digitalWrite(3, HIGH);
+  } else {
+    digitalWrite(2, LOW);
+    digitalWrite(3, LOW);
+  }
+
+  if(roll > 0){
+    digitalWrite(5, HIGH);
+    digitalWrite(4, LOW);
+  }else if(roll < 0){
+    digitalWrite(5, LOW);
+    digitalWrite(4, HIGH);
+  } else {
+    digitalWrite(4, LOW);
+    digitalWrite(5, LOW);
+  }
   sendData();
 }
 
