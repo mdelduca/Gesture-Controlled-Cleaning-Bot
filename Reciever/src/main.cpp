@@ -2,18 +2,16 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
-RF24 radio(7, 8); // CE, CSN
+#define CE_PIN 8
+#define CFN_PIN 10
+
+RF24 radio(CE_PIN, CFN_PIN); // CE, CSN
 
 const byte address[6] = "00001";
-
-#define LEFT_PIN A1
-#define RIGHT_PIN A2
-#define SPONGE_PIN A3
-
 /*
 roll/pitch effect steering
 flex sensor effect acceleration
-message format:
+Message Structure:
 msg[0] pitch value
 msg[1] roll value
 msg[2] flex value
@@ -46,75 +44,87 @@ need the specific desired ratios on how each sensor should effect things
 
 */
 
-int calculateSpongePWM(int gyro_pitch){
-	// taking pitch in Degrees, converting to PWM
-	// trying linear relationship
-	return (gyro_pitch)*(255/90);
-}
+// ---------------- Wheel Motor Control ---------------
+int motor1_fctrl = 2;               // direction/control motorA -fwd
+int enA = 3;                        // motor speed
+int motor1_bctrl = 4;               // direction/control motorA -bwd
+
+int motor2_fctrl = 5;               // direction/control motorB -fwd
+int enB = 6;                        // speed
+int motor2_bctrl = 7;               // direction/control motorB -bwd
+
+//----------------- Flex Sensor -----------------------
+const int flexPin = A0;     // for flex sensor 
+const int motorPin = 9;     // for motor
+const int ledPin = 3;       // could add for backwards heading 
+
+int smotorspeed;            // sponge motor
+int lastValidReading = -1;  // Initialize with an invalid value to indicate that there's no previous reading
+int force_resistance;
 
 
-
-int roll_steer_threshold = 20;
-int flex_threshold = 700;
-
-int determineMoveState(int flex_value, int gyro_roll){
-	if(abs(flex_value) >= flex_threshold){
-		// we can move, figure out how we will moving
-		if(gyro_roll >= roll_steer_threshold){
-			// we are steering right
-			return 3;
-		}else if(gyro_roll <= -1*roll_steer_threshold){
-			// we are steering left
-			return 2;
-		}else{
-			// move forward
-			return 1;
-		}
-	}else{
-		return 0;
-	}
+/*
+0 = forward
+1 = backward
+2 = left
+3 = right
+4 = stop
+stop if both angles are below threshold
+forward/backward take priority, determined by pitch
+*/
+int determineMoveState(int gyro_roll, int gyro_pitch){
 	
-}
-
-int pitch_sponge_threshold = 20;
-
-int determineSpongeState(int gyro_pitch){
-	if(abs(gyro_pitch) >= pitch_sponge_threshold){
-		// we are sponging now
-		return 1;
-	}else{
-		// no sponge movement
+	if(gyro_pitch > 0){
+		// move forwards
 		return 0;
+	}else if(gyro_pitch < 0 ){
+		// move backwards
+		return 1;
+	}else if(gyro_roll > 0){
+		// move left
+		return 2;
+	}else if(gyro_roll < 0){
+		// move right
+		return 3;
+	}else{
+		// stop
+		return 4;
 	}
 }
+
 
 void setup() {
   	Serial.begin(9600);
-	
-	pinMode(LEFT_PIN, OUTPUT);
-	pinMode(RIGHT_PIN, OUTPUT);
-	pinMode(SPONGE_PIN, OUTPUT);
 	
 	radio.begin();
 	radio.openReadingPipe(1, address);
 	radio.setPALevel(RF24_PA_MIN);
 	radio.startListening();
+
+	// driving motor 
+	pinMode(enA, OUTPUT);
+	pinMode(motor1_fctrl, OUTPUT);
+	pinMode(motor1_bctrl, OUTPUT);
+	pinMode(enB, OUTPUT);
+	pinMode(motor2_fctrl, OUTPUT);
+	pinMode(motor2_bctrl, OUTPUT);
+
+	// sponge motor
+	pinMode(motorPin, OUTPUT);
 }
 
 int flex_sensor = 0;
 int roll = 0;
 int pitch = 0;
-int move_state = 0;
-int sponge_state = 0;
+bool sponge_state = false;
 
-int left_PWM = 0;
-int right_PWM = 0;
-int sponge_PWM = 0;
-
-int accel_value = 50;
-int low_steer_value = 25;
-int high_steer_value = 75;
-int sponge_value = 50;
+/*
+Message Structure:
+3 floats
+pitch, roll, then flex sensor
+*/
+int force_threshold = 75;
+bool debounce = true;
 
 void loop() {
   	if (radio.available()) {
@@ -125,49 +135,123 @@ void loop() {
 		Serial.print(" ");
 		Serial.print(msg[1], DEC);
 		Serial.print(" ");
-		Serial.println(msg[2], DEC);
+		//Serial.println(msg[2], DEC);
 		
 
 		// manipulate motors based on the recieved sensor values
-		flex_sensor = msg[0];
+		pitch = msg[0];
 		roll = msg[1];
-		pitch = msg[2];
-		move_state = determineMoveState(flex_sensor, roll);
-		sponge_state = determineSpongeState(pitch);
+		flex_sensor = msg[2];
 
-		if(move_state == 1){
-			// move forward
-			left_PWM = accel_value;
-			right_PWM = accel_value;
-		}else if(move_state == 2){
-			// move left
-			left_PWM = high_steer_value;
-			right_PWM = low_steer_value;
-		}else if(move_state == 3){
-			// move right
-			left_PWM = low_steer_value;
-			right_PWM = high_steer_value;
-		}else{
-			// do nothing
-			left_PWM = 0;
-			right_PWM = 0;
-		}
+		// ============================  M O T O R   C O N T R O L  ===========================================
+		// ====================================================================================================
 
-		if(sponge_state == 1){
-			// sponging
-			sponge_PWM = sponge_value;
-		}else{
-			// no sponging
-			sponge_PWM = 0;
+		// orientation is received from the glove, gyroscopic sensor 
+		int orientation = determineMoveState(roll, pitch);  // 0 = forwards, 1 = backwards, 2 = left, 3 = right, 4 = stop
+		Serial.println(orientation, DEC);
+		switch(orientation) {
+			case 0:
+				// move forwards
+				digitalWrite(motor1_fctrl, LOW);
+				digitalWrite(motor1_bctrl, HIGH);
+				digitalWrite(motor2_fctrl, HIGH);
+				digitalWrite(motor2_bctrl, LOW);
+				analogWrite(enA, 150);//right wheel;
+				analogWrite(enB, 100);//lreft wheel
+			break;
+			case 1:
+				// move backwards
+				digitalWrite(motor1_fctrl, HIGH);
+				digitalWrite(motor1_bctrl, LOW);
+				digitalWrite(motor2_fctrl, LOW);
+				digitalWrite(motor2_bctrl, HIGH);
+				analogWrite(enA, 150);//right wheel;
+				analogWrite(enB, 100);//lreft wheel
+			break;
+			case 2:
+				// move left
+				digitalWrite(motor1_fctrl, LOW);
+				digitalWrite(motor1_bctrl, HIGH);
+				digitalWrite(motor2_fctrl, HIGH);
+				digitalWrite(motor2_bctrl, LOW);
+				analogWrite(enA, 100);//right wheel;
+				analogWrite(enB, 50);//lreft wheel
+			break;
+			case 3:
+				// move right
+				digitalWrite(motor1_fctrl, LOW);
+				digitalWrite(motor1_bctrl, HIGH);
+				digitalWrite(motor2_fctrl, HIGH);
+				digitalWrite(motor2_bctrl, LOW);
+				analogWrite(enA, 100);//right wheel;
+				analogWrite(enB, 100);//lreft wheel
+			break;
+			default:
+				// stop
+				digitalWrite(motor1_fctrl, LOW);
+				digitalWrite(motor1_bctrl, LOW);
+				digitalWrite(motor2_fctrl, LOW);
+				digitalWrite(motor2_bctrl, LOW);
+				digitalWrite(enA, 0);
+				digitalWrite(enB, 0);
+			break;
 		}
 		
-  	}
+		// ============================  F L E X  S E N S O R  ================================================
+		// ====================================================================================================
+		force_resistance = (int) flex_sensor;                       // reads voltage output from flex sensor 0-1023
+		force_resistance = map(force_resistance, 0, 1023, 255, 0);    // maps the voltage output to a value between 0 and 255, max speed of motor
+		Serial.println(force_resistance, DEC);
 
-	
-	
-	// output these PWM values to the corresponding pins
-	analogWrite(LEFT_PIN, left_PWM);
-	analogWrite(RIGHT_PIN, right_PWM);
-	analogWrite(SPONGE_PIN, sponge_PWM);
-	
+		
+		if(force_resistance <= force_threshold && debounce){
+			sponge_state = !sponge_state;
+			debounce = false;
+		}else if(force_resistance > force_threshold){
+			debounce = true;
+		}
+
+		if(sponge_state){
+			// move sponge
+			smotorspeed = 150;
+		}else{
+			smotorspeed = 0;
+		}
+
+		//lastValidReading = force_resistance;
+		/*
+		if (lastValidReading == -1 || ( force_resistance >= lastValidReading * 0.9 || force_resistance <= lastValidReading * 1.1)) {
+			// Update the last valid reading
+			lastValidReading = force_resistance;
+			// Process the current reading as it is valid
+			//Serial.print("Valid reading: ");
+			//Serial.println(force_resistance);
+		} else {
+			// Ignore the reading as it's an outlier
+			//Serial.println("Outlier detected, ignoring reading.");
+		} 
+		*/
+		//*** SET TO TOGGLE INSTEAD OF A GRADIENT
+		// inverval adjustments for motor speed  
+		/*                     
+		if (lastValidReading > 0 && lastValidReading <= 50){
+			smotorspeed = 50;
+		} else if (lastValidReading > 50 && lastValidReading <= 100 ) {
+			smotorspeed = 100;
+		} else if (lastValidReading > 100 && lastValidReading <= 150 ){
+			smotorspeed = 150;
+		} else if (lastValidReading > 150 && lastValidReading <= 200 ){
+			smotorspeed = 200;
+		} else if (lastValidReading > 200){
+			smotorspeed = 250;
+		} else if (lastValidReading == 0){
+			smotorspeed = 0;
+		}*/
+
+		//analogWrite(motorPin, smotorspeed); 
+		analogWrite(motorPin, smotorspeed);                 // sets the speed of the motor 
+		Serial.println(smotorspeed);
+
+		//delay(100);		
+  	}
 }
