@@ -14,6 +14,7 @@ const byte address[6] = "00001";
 
 const int MPU = 0x68;  // MPU6050 I2C address
 const int flexPin = A0;
+const int ledPin = 4;
 float accX, accY, accZ;
 float gyroX, gyroY, gyroZ;
 float pitch, roll;
@@ -38,7 +39,8 @@ void sendData();
 
 void setup() {
   Serial.begin(19200);
-  
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, HIGH);
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
@@ -57,6 +59,7 @@ void setup() {
   delay(20);
   prevSet = false;
   cycleCount = 0;
+  digitalWrite(ledPin, LOW);
 }
 
 void loop() {
@@ -114,7 +117,7 @@ void loop() {
   }
 
   pitch = 0.96 * gXRaw + 0.04 * accAngleX;
-  roll = 0.96 * gYRaw + 0.04 * accAngleY;
+  roll = 0.96 * gYRaw + 0.04 * accAngleY + 5;
 
   if (abs(pitch) < 15) {
     pitch = 0;
